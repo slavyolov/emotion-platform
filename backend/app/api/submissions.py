@@ -1,9 +1,10 @@
 from typing import Dict, List, Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, File, Form, UploadFile, HTTPException, Header
+from fastapi import APIRouter, Depends, File, Form, UploadFile, HTTPException
 from pydantic import BaseModel
 
+from app.api.auth import get_current_user, User
 from app.services import emotion
 
 router = APIRouter()
@@ -11,7 +12,7 @@ router = APIRouter()
 
 class Submission(BaseModel):
     id: str
-    user_token: str
+    user_email: str
     name: str
     age: int
     gender: str
@@ -27,6 +28,7 @@ class SubmissionResponse(Submission):
     pass
 
 
+# In-memory storage for MVP
 _SUBMISSIONS: List[Submission] = []
 
 
@@ -38,21 +40,23 @@ async def create_submission(
     location: Optional[str] = Form(None),
     country: str = Form(...),
     photo: UploadFile = File(...),
-    authorization: str = Header("", alias="Authorization"),
+    current_user: User = Depends(get_current_user),
 ):
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Missing Authorization header")
-
+    """
+    Create a submission: requires a valid JWT.
+    Accepts multipart/form-data with a photo and metadata.
+    """
     if age < 3 or age > 100:
         raise HTTPException(status_code=422, detail="Age out of range")
 
     submission_id = str(uuid4())
     image_bytes = await photo.read()
+
     emo = emotion.predict(image_bytes)
 
     submission = Submission(
         id=submission_id,
-        user_token=authorization,
+        user_email=current_user.email,
         name=name,
         age=age,
         gender=gender,
