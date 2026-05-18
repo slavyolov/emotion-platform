@@ -4,7 +4,6 @@ python-multipart
 pydantic
 python-jose[cryptography]
 passlib[bcrypt]
-deepface
 pillow
 numpy
 email-validator
