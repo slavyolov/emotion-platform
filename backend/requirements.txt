@@ -3,7 +3,8 @@ uvicorn[standard]
 python-multipart
 pydantic
 python-jose[cryptography]
-passlib[bcrypt]
 pillow
 numpy
 email-validator
+passlib[bcrypt]
+bcrypt==4.0.1

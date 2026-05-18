@@ -105,6 +105,10 @@ async def register(payload: RegisterRequest):
     email = payload.email.lower()
     if email in fake_users_db:
         raise HTTPException(status_code=400, detail="Email already registered")
+
+    if len(payload.password.encode("utf-8")) > 72:
+        raise HTTPException(status_code=400, detail="Password too long; max 72 bytes for current hashing setup.")
+    
     hashed_pw = get_password_hash(payload.password)
     fake_users_db[email] = {"email": email, "hashed_password": hashed_pw, "is_active": True}
     # Immediately return a token so the UX is simple
